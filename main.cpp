@@ -3,7 +3,10 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <getopt.h>
+#include <unistd.h>
 //#include "LightSerial.h"
+
 
 /* mock function */
 int pin_state;
@@ -92,52 +95,6 @@ LightSerial::LightSerial(int led_n, int led_p) {
     _byte = 0;
     _byte_pos = 0;
 }
-
-/*  ANTESSS
-int LightSerial::available() {
-    _signal_cur = digitalRead(LED);
-
-    int signal_transition = 0;
-    // REVISAR ESTO!
-    if (_signal_cur == _signal_prev) {
-        if (_transition_detected) {
-            _transition_count += 1;
-            if (_transition_count >= _transition_threshold) {
-                _count += _transition_count;
-                _transition_count = 0;
-                _transition_detected = 0;
-                signal_transition = 1;
-            }
-        } else {
-            _count += 1;
-        }
-    } else {
-        if ( !_transition_detected) {
-            _transition_detected = 1;
-        } else {
-            if (_transition_count < _transition_threshold) {
-                _transition_detected = 0;
-                _transition_count = 0;
-            }
-        }
-    }
-
-    switch( _state ) {
-        case STATE_IDLE:
-            if (signal_transition) 
-                state_idle();
-            break;
-        case STATE_DECODING:
-            if (signal_transition) 
-                state_decoding();
-            break;
-    }
-    
-    _signal_prev = _signal_cur;
-    return 0;
-}
- *  ANTESS
-*/
 
 void LightSerial::process_sample(int sample){
 
@@ -305,8 +262,8 @@ class LightEncoder {
         int _noisy;
         int _msg_len;
 
-        void put_bit(char bit); // MOVER DE NUEVO A PRIVADO!
     private:
+        void put_bit(char bit);
         void encode_bit(char bit);
         void encode_char(char c);
         unsigned char crc_8( unsigned char in_crc, unsigned char in_data );
@@ -330,11 +287,11 @@ void LightEncoder::put_bit(char bit) {
         int noise_max = 1 + _base_len / 2;
         int noise = rand() % noise_max;
         signal_len += noise;
-        //asigno una probabilidad del 5% de error
-        int error_prob = 5;
-        int error = ( rand() % 100 ) <= 5;
+        //asigno una probabilidad del 10% de error
+        int error_probability = 10;
+        int error = ( rand() % 100 ) <= error_probability;
         if (error) {
-            flipbit = (rand() % signal_len/2) + signal_len/2;
+            flipbit = (rand() % (int)floor(signal_len*.9)) + signal_len*.1;
         }
     }
     int i;
@@ -413,7 +370,10 @@ unsigned char LightEncoder::crc_8( unsigned char in_crc, unsigned char in_data )
     return data;
 }
 
-int main(int argc, const char *argv[]) {
+int x() {
+
+    //unsigned short int samples;
+    //printf("%d\n", sizeof( samples )<<3 );
 
     //printf("%d\n", sizeof(LightSerial) );
     /*
@@ -445,6 +405,7 @@ int main(int argc, const char *argv[]) {
     return 0;
 
      */
+
     LightEncoder lenc = LightEncoder();
     lenc._base_len = 10;
     lenc._noisy = 1;
@@ -465,3 +426,136 @@ int main(int argc, const char *argv[]) {
 
     return 0;
 }
+
+// valid short options
+const char* const opCortas = "edb:nHh:l:";
+
+// valid long options
+const struct option opLargas[] = {
+    { "encode",  no_argument,       NULL, 'e' },
+    { "decode",  no_argument,       NULL, 'd' },
+    { "baselen", required_argument, NULL, 'b' },
+    { "noise",   no_argument,       NULL, 'n' },
+    { "help",    no_argument,       NULL, 'H' },
+    { "high",    required_argument, NULL, 'h' },
+    { "low",     required_argument, NULL, 'l' },
+    { NULL,      no_argument,       NULL, 0 }
+};
+
+void print_help() {
+  printf("LightSerial v0.1\n");
+}
+
+int main(int argc, char** argv) {
+
+    x();
+    return 0;
+    // getopt does not print to stderr
+    opterr = 0;
+    
+    // flag for every argument processed
+    int nextOpt = 0;
+    int base_len = 3;
+    int noisy = 0;
+
+    typedef enum {PASS, ENCODE, DECODE} tAction;
+
+    tAction action = PASS;
+
+    while (1) {
+
+        nextOpt = getopt_long( argc,
+                               argv,
+                               opCortas,
+                               opLargas,
+                               NULL);
+
+        if (nextOpt == -1) {
+                break;
+        }
+
+        switch (nextOpt) {
+
+            case 'e': {
+                action = ENCODE;
+                break;
+            }
+
+            case 'd': {
+                action = DECODE;
+                break;
+            }
+
+            case 'b': {
+                if (strlen(optarg) > 0) {
+                    if ( ( sscanf( optarg, "%d", &base_len) != 1 ) ||
+                         ( base_len <= 0 ) ) {
+                        fprintf( stderr,
+                                 "fatal: invalid base_len specification.\n");
+                        return 1;
+                    }
+                }
+                break;
+            }
+
+            case 'n': {
+                noisy = 1;
+                break;
+            }
+
+            case 'H': {
+                print_help();
+                return 0;
+                break;
+            }
+
+            default: {
+                print_help();
+                exit(-1);
+                break;
+            }
+
+        }
+    }
+
+    switch (action) {
+
+        case ENCODE: {
+                LightEncoder lenc = LightEncoder();
+                lenc._base_len = base_len;
+                lenc._noisy = noisy;
+
+                //char msg[] = "bitch better have my money!";
+
+                char buffer[16];
+                int i;
+                for (i = 0; i < 16; i++) {
+                    buffer[i] = 0;
+                }
+                int n_read;
+                while ( (n_read = read(STDIN_FILENO, buffer, 16)) > 0 ) {
+                    buffer[n_read] = 0;
+                    //printf("%s\n", buffer);
+                    lenc.encode_msg(buffer);
+                    printf("%s", lenc._msg);
+                    for (i = 0; i < 16; i++) {
+                        buffer[i] = 0;
+                    }
+                    for (i = 0; i < lenc._msg_len; i++) {
+                        lenc._msg[i] = 0;
+                    }
+                    lenc._msg_len = 0;
+                }
+                printf("\n", lenc._msg);
+                if (strlen(optarg) > 0) {
+                    //printf("%s\n", optarg);
+                }
+            break;
+        }
+        case DECODE: {
+            break;
+        }
+    }
+    return 0;
+}
+
