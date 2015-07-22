@@ -557,9 +557,12 @@ int main(int argc, char** argv) {
 
                 int i;
                 for (i = 0; i <= n_read; i++) {
-                    set_pin( buffer[i] );
-                    if ( lSerial.available() ) {
-                        // do something with such message
+                    char state = buffer[i];
+                    if (state == '0' or state == '1') {
+                        set_pin( state );
+                        if ( lSerial.available() ) {
+                            // do something with such message
+                        }
                     }
                 }
             }
