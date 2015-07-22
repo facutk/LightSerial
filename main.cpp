@@ -448,8 +448,8 @@ void print_help() {
 
 int main(int argc, char** argv) {
 
-    x();
-    return 0;
+    //x();
+    //return 0;
     // getopt does not print to stderr
     opterr = 0;
     
@@ -535,9 +535,8 @@ int main(int argc, char** argv) {
                 int n_read;
                 while ( (n_read = read(STDIN_FILENO, buffer, 16)) > 0 ) {
                     buffer[n_read] = 0;
-                    //printf("%s\n", buffer);
                     lenc.encode_msg(buffer);
-                    printf("%s", lenc._msg);
+                    write(STDOUT_FILENO, lenc._msg, lenc._msg_len);
                     for (i = 0; i < 16; i++) {
                         buffer[i] = 0;
                     }
@@ -546,13 +545,25 @@ int main(int argc, char** argv) {
                     }
                     lenc._msg_len = 0;
                 }
-                printf("\n", lenc._msg);
-                if (strlen(optarg) > 0) {
-                    //printf("%s\n", optarg);
-                }
             break;
         }
         case DECODE: {
+            LightSerial lSerial = LightSerial(1,2);
+            char buffer[16];
+            int n_read;
+            while ( (n_read = read(STDIN_FILENO, buffer, 16)) > 0 ) {
+                //buffer[n_read] = 0;
+                //printf("%s\n", buffer);
+
+                int i;
+                for (i = 0; i <= n_read; i++) {
+                    set_pin( buffer[i] );
+                    if ( lSerial.available() ) {
+                        // do something with such message
+                    }
+                }
+            }
+            printf("\n");
             break;
         }
     }
