@@ -5,12 +5,17 @@
 #include <time.h>
 #include <getopt.h>
 #include <unistd.h>
-//#include "LightSerial.h"
+#include "LightSerial.h"
+#include "ArduinoMock.h"
 int debug = 0;
 
 /* mock function */
+/*
 int pin_state;
 int LED;
+int digitalRead(int );
+void set_pin(char );
+
 int digitalRead(int pin) {
     return pin_state;
 }
@@ -21,7 +26,9 @@ void set_pin(char value) {
         pin_state = 1;
     }
 }
+*/
 
+/*
 #define STATE_IDLE 0
 #define STATE_DECODING 1
 #define STATE_TIMEOUT 2
@@ -75,7 +82,9 @@ class LightSerial {
     unsigned char _byte;
     unsigned char _msg[64];
 };
+*/
 
+/*
 void LightSerial::clean_state() {
     int i;
     for (i = 0; i < 8; i++) {
@@ -137,6 +146,9 @@ void LightSerial::process_sample(int sample){
 
     switch( _state ) {
         case STATE_TIMEOUT:
+            _state = STATE_IDLE;
+            break;
+            //break; <- no le pongo esto, asi defaultea a STATE_IDLE
 
         case STATE_IDLE:
             if (signal_transition) 
@@ -235,7 +247,7 @@ void LightSerial::calc_threshold() {
     
     //printf("%d\n", avg_len);
 
-    /* VARIANCE */
+    // VARIANCE
     //int std_dev = 0;
     //for (i = 0; i < 8; i++) 
         //std_dev += ( avg_len - _window[i] )*( avg_len - _window[i] );
@@ -246,7 +258,7 @@ void LightSerial::calc_threshold() {
     //printf("std_dev: %d\n", std_dev);
     //_transition_threshold = std_dev; // 2 std = 95% cases
     //printf("transition: %d\n", _transition_threshold);
-    /* VARIANCE */
+    // VARIANCE
 
     avg_len += avg_len>>1;
     if (debug) printf("AVG_LEN: %d\n", avg_len);
@@ -269,6 +281,7 @@ unsigned char crc_8( unsigned char in_crc, unsigned char in_data ) {
     return data;
 }
 
+*/
 #define buffer_size 1024*8
 
 class LightEncoder {
@@ -278,7 +291,7 @@ class LightEncoder {
         char _msg[buffer_size];
         int _base_len;
         int _noisy;
-        int _msg_len;
+        unsigned int _msg_len;
 
     private:
         void put_bit(char bit);
@@ -510,7 +523,7 @@ int x() {
     printf("%s\n", lenc._msg);
 
     LightSerial lSerial = LightSerial(1,2);
-    int i;
+    unsigned int i;
     for (i = 0; i < lenc._msg_len; i++) {
         set_pin( lenc._msg[i] );
         if ( lSerial.available() ) {
@@ -631,17 +644,17 @@ int main(int argc, char** argv) {
 
                 //char msg[] = "bitch better have my money!";
 
-                char buffer[16];
-                int i;
-                for (i = 0; i < 16; i++) {
+                char buffer[4];
+                unsigned int i;
+                for (i = 0; i < sizeof(buffer); i++) {
                     buffer[i] = 0;
                 }
                 int n_read;
-                while ( (n_read = read(STDIN_FILENO, buffer, 16)) > 0 ) {
+                while ( (n_read = read(STDIN_FILENO, buffer, sizeof(buffer))) > 0 ) {
                     buffer[n_read] = 0;
                     lenc.encode_msg(buffer);
                     write(STDOUT_FILENO, lenc._msg, lenc._msg_len);
-                    for (i = 0; i < 16; i++) {
+                    for (i = 0; i < sizeof(buffer); i++) {
                         buffer[i] = 0;
                     }
                     for (i = 0; i < lenc._msg_len; i++) {
@@ -677,3 +690,11 @@ int main(int argc, char** argv) {
     return 0;
 }
 
+/*
+ * Tengo varios niveles de complejidad juntos
+ * El sampleo
+ * Cuando se llena un sampleo, paso al recuento
+ * Hay eventos de 0 y 1
+ * Cuando hay un cambio de 0 a 1, hay una transicion
+ * Despues de varias transiciones se pasa de estado
+ * */
