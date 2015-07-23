@@ -94,7 +94,6 @@ void loop()
     {
       //nonZero = false;
       isDark = false;
-      break;
     }
   }
   
@@ -113,19 +112,17 @@ void loop()
   {
     samples += 1;
   }
-
+  count+=1;
   
-  if( count >= 15 )
+  if( count > 16 )
   {
-    count = 0;
-    Serial.print( micros() );
-    Serial.print(": ");
-    Serial.print( samples, BIN );
+    Serial.print( samples, HEX );
     Serial.println("");
+    count = 0;
     samples = 0;
   }
   
-  count+=1;
+ 
   delay(5);
   
   //unsigned int j;
