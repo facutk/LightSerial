@@ -6,7 +6,7 @@
 #include <getopt.h>
 #include <unistd.h>
 //#include "LightSerial.h"
-
+int debug = 0;
 
 /* mock function */
 int pin_state;
@@ -148,7 +148,6 @@ int LightSerial::available() {
     _sample_count +=1;
     _samples += reading;
     if (_sample_count > 15) {
-        int i;
         unsigned short int mask;
         for (mask = 0x8000; mask > 0; mask>>=1) {
             signal = (_samples & mask)>0;
@@ -220,6 +219,8 @@ void LightSerial::calc_threshold() {
         avg_len += _window[i];
     
     avg_len >>= 3; // avg divided by 8
+
+    
     //printf("%d\n", avg_len);
 
     /* VARIANCE */
@@ -236,6 +237,7 @@ void LightSerial::calc_threshold() {
     /* VARIANCE */
 
     avg_len += avg_len>>1;
+    if (debug) printf("AVG_LEN: %d\n", avg_len);
     _signal_threshold = avg_len;
 }
 
@@ -472,7 +474,7 @@ int x() {
                      );
 
     LightSerial testSerial = LightSerial(1,2);
-    int j;
+    unsigned int j;
     for (j = 0; j < strlen(stream); j++) {
         set_pin( stream[j] );
         if ( testSerial.available() ) {
@@ -508,7 +510,7 @@ int x() {
 }
 
 // valid short options
-const char* const opCortas = "edb:nHh:l:";
+const char* const opCortas = "edb:nxHh:l:";
 
 // valid long options
 const struct option opLargas[] = {
@@ -516,6 +518,7 @@ const struct option opLargas[] = {
     { "decode",  no_argument,       NULL, 'd' },
     { "baselen", required_argument, NULL, 'b' },
     { "noise",   no_argument,       NULL, 'n' },
+    { "debug",   no_argument,       NULL, 'x' },
     { "help",    no_argument,       NULL, 'H' },
     { "high",    required_argument, NULL, 'h' },
     { "low",     required_argument, NULL, 'l' },
@@ -583,6 +586,11 @@ int main(int argc, char** argv) {
                 break;
             }
 
+            case 'x': {
+                debug = 1;
+                break;
+            }
+
             case 'H': {
                 print_help();
                 return 0;
@@ -599,6 +607,9 @@ int main(int argc, char** argv) {
     }
 
     switch (action) {
+        case PASS: {
+            break;
+        }
 
         case ENCODE: {
                 LightEncoder lenc = LightEncoder();
