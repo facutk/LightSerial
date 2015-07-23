@@ -24,6 +24,7 @@ void set_pin(char value) {
 
 #define STATE_IDLE 0
 #define STATE_DECODING 1
+#define STATE_TIMEOUT 2
 
 #define SIGNAL_SHORT 2
 #define SIGNAL_LONG 3
@@ -34,6 +35,7 @@ class LightSerial {
     LightSerial(int led_n, int led_p);
     int available();
   private:
+    void clean_state();
     void process_sample(int sample);
     void calc_threshold();
     void state_idle();
@@ -74,7 +76,7 @@ class LightSerial {
     unsigned char _msg[64];
 };
 
-LightSerial::LightSerial(int led_n, int led_p) {
+void LightSerial::clean_state() {
     int i;
     for (i = 0; i < 8; i++) {
         _window[i] = 0;
@@ -88,12 +90,16 @@ LightSerial::LightSerial(int led_n, int led_p) {
     _transition_threshold = 3;
     _count = 0;
     _signal_threshold = 0;
-    _signal_timeout = 255;
+    _signal_timeout = 64;
     _state = STATE_IDLE;
     _signal_len_prev = SIGNAL_SHORT;
     _signal_sync_bit = 0;
     _byte = 0;
     _byte_pos = 0;
+}
+
+LightSerial::LightSerial(int led_n, int led_p) {
+    clean_state();
 }
 
 void LightSerial::process_sample(int sample){
@@ -114,6 +120,10 @@ void LightSerial::process_sample(int sample){
         } else {
             _count += 1;
         }
+        if (_count > _signal_timeout) {
+            clean_state();
+            _state = STATE_TIMEOUT;
+        }
     } else {
         if ( !_transition_detected) {
             _transition_detected = 1;
@@ -126,6 +136,8 @@ void LightSerial::process_sample(int sample){
     }
 
     switch( _state ) {
+        case STATE_TIMEOUT:
+
         case STATE_IDLE:
             if (signal_transition) 
                 state_idle();
@@ -239,6 +251,7 @@ void LightSerial::calc_threshold() {
     avg_len += avg_len>>1;
     if (debug) printf("AVG_LEN: %d\n", avg_len);
     _signal_threshold = avg_len;
+    _signal_timeout = avg_len<<=1;
 }
 
 unsigned char crc_8( unsigned char in_crc, unsigned char in_data ) {
