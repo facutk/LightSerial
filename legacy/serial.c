@@ -35,7 +35,7 @@ void digitalWrite(int pin, uint8_t state) {
         if (flipbit) {
             write(pin, &states[!state], 1);
         } else {
-            printf("%c", states[state]);
+            //printf("%c", states[state]);
             write(pin, &states[state], 1);
         }
     }
@@ -49,6 +49,10 @@ typedef struct decoder {
     uint8_t _window[8];
     uint8_t _slot;
     uint8_t _avg;
+    uint8_t _bit_count;
+    char _byte;
+    char _byte_decoded;
+    uint8_t _decoded;
 } tDecoder;
 
 void decoder_init(tDecoder* d, int pin) {
@@ -58,6 +62,56 @@ void decoder_init(tDecoder* d, int pin) {
     d->_decoding = 0;
     d->_slot = 0;
     d->_avg = 0;
+    d->_bit_count = 0;
+    d->_byte = 0x00;
+    d->_decoded = 0;
+}
+
+void decoder_decode_bit(tDecoder* d, uint8_t bit) {
+    //  0  1  2  3  4  5  6  7  8  9 10
+    // LO D0 D1 D2 D3 D4 D5 D6 D7 PT HI
+    //printf("%d\t%d\n", d->_bit_count, bit);
+
+    if (d->_bit_count == 0) {
+        if (bit == 1) {
+            // ERROR
+            printf("START ERROR\n");
+            d->_decoding = 0;
+        }
+    } else if (d->_bit_count == 10) {
+        if (bit == 0) {
+            // ERROR
+            printf("END ERROR\n");
+            d->_decoding = 0;
+        }
+        if (d->_decoding) {
+            //printf("DECODED: %c\n", d->_byte);
+            d->_decoded = 1;
+            d->_byte_decoded = d->_byte;
+        }
+    } else if (d->_bit_count == 9) {
+        uint8_t parity = 1;
+        unsigned char mask;
+        for (mask = 0x80; mask > 0; mask >>=1) {
+            if ((d->_byte & mask ) > 0) {
+                parity += 1;
+            }
+        }
+        parity = parity % 2;
+        if (bit != parity) {
+            //ERROR
+            printf("PARITY ERROR\n");
+            d->_decoding = 0;
+        }
+    } else {
+        d->_byte <<=1;
+        d->_byte += bit;
+    }
+
+    d->_bit_count += 1;
+    if ( d->_bit_count > 10 ) {
+        d->_bit_count = 0;
+    }
 }
 
 int decoder_available(tDecoder*d) {
@@ -71,7 +125,7 @@ int decoder_available(tDecoder*d) {
             int bit_count = d->_count / d->_avg;
             int i;
             for (i = 0; i < bit_count; i++) {
-                printf("%d\n", d->_prev_reading);
+                decoder_decode_bit(d, d->_prev_reading);
             }
             //printf("count: %d, avg: %d, bit_count: %d\n", d->_count, d->_avg, bit_count);
         
@@ -83,7 +137,7 @@ int decoder_available(tDecoder*d) {
                     sum += d->_window[i];
                 }
                 int avg = sum / sizeof( d->_window );
-                printf("sum: %d, avg: %d\n", sum, avg);
+                //printf("sum: %d, avg: %d\n", sum, avg);
                 if ( d->_count >= (avg*2) ) {
                     d->_decoding = 1;
                     d->_avg = avg;
@@ -94,13 +148,14 @@ int decoder_available(tDecoder*d) {
         }
         d->_count = 1;
     }
+
     d->_prev_reading = reading;
-    return 0;
+    return d->_decoded;
 }
 
 char decoder_read(tDecoder* d) {
-    /* code */
-    return 0;
+    d->_decoded = 0;
+    return d->_byte_decoded;
 }
 
 typedef struct encoder {
@@ -165,14 +220,15 @@ int main(int argc, char *argv[]) {
     if (cpid == 0) {    /* Child reads from pipe */
         close(pipefd[1]);          /* Close unused write end */
 
-
         tDecoder decoder;
         decoder_init(&decoder, pipefd[0]);
 
         int i;
-        for (i = 0; i < 260; i++) {
+        for (i = 0; i < 2048; i++) {
             if ( decoder_available(&decoder) ) {
-                printf("%c\n", decoder_read(&decoder) );
+                char buf = decoder_read(&decoder);
+                write(STDOUT_FILENO, &buf, 1);
+                //printf("%c", decoder_read(&decoder) );
             }
         }
         //while (read(pipefd[0], &buf, 1) > 0)
@@ -183,9 +239,9 @@ int main(int argc, char *argv[]) {
         _exit(EXIT_SUCCESS);
 
     } else {
-        char msg[] = "b";
+        char msg[] = "bitch";
         close(pipefd[0]);          /* Close unused read end */
-        printf("msg to encode: %s\n", msg);
+        //printf("msg to encode: %s\n", msg);
 
         tEncoder encoder;
         encoder_init(&encoder, pipefd[1]);
