@@ -13,10 +13,20 @@
 
 void delay(int microseconds) {}
 
+int digitalRead(int pin) {
+    char buf;
+    read(pin, &buf, 1);
+    int reading = 0;
+    if (buf == '1') {
+        reading = 1;
+    }
+    return reading;
+}
+
 void digitalWrite(int pin, uint8_t state) {
     char states[] = "01";
     int outlen = BASELEN;
-    int noise_max = 1 + BASELEN/2;
+    int noise_max = 1 + BASELEN/4;
     int noise = rand() % noise_max;
     outlen += noise;
     int i;
@@ -25,14 +35,76 @@ void digitalWrite(int pin, uint8_t state) {
         if (flipbit) {
             write(pin, &states[!state], 1);
         } else {
+            printf("%c", states[state]);
             write(pin, &states[state], 1);
         }
     }
 }
 
-typedef struct enconder {
+typedef struct decoder {
     int _pin;
-    int _baselen;
+    uint8_t _prev_reading;
+    uint8_t _count;
+    uint8_t _decoding;
+    uint8_t _window[8];
+    uint8_t _slot;
+    uint8_t _avg;
+} tDecoder;
+
+void decoder_init(tDecoder* d, int pin) {
+    d->_pin = pin;
+    d->_prev_reading = 0;
+    d->_count = 0;
+    d->_decoding = 0;
+    d->_slot = 0;
+    d->_avg = 0;
+}
+
+int decoder_available(tDecoder*d) {
+    int reading = digitalRead( d->_pin );
+    if (reading == d->_prev_reading) {
+        if (d->_count < 255) {
+            d->_count +=1;
+        }
+    } else {
+        if (d->_decoding) {
+            int bit_count = d->_count / d->_avg;
+            int i;
+            for (i = 0; i < bit_count; i++) {
+                printf("%d\n", d->_prev_reading);
+            }
+            //printf("count: %d, avg: %d, bit_count: %d\n", d->_count, d->_avg, bit_count);
+        
+        } else {
+            if (d->_slot > sizeof(d->_window)) {
+                int i;
+                int sum = 0;
+                for (i = 0; i < sizeof( d->_window ); i++) {
+                    sum += d->_window[i];
+                }
+                int avg = sum / sizeof( d->_window );
+                printf("sum: %d, avg: %d\n", sum, avg);
+                if ( d->_count >= (avg*2) ) {
+                    d->_decoding = 1;
+                    d->_avg = avg;
+                }
+            }
+            d->_slot += 1;
+            d->_window[ d->_slot % sizeof( d->_window ) ] = d->_count;
+        }
+        d->_count = 1;
+    }
+    d->_prev_reading = reading;
+    return 0;
+}
+
+char decoder_read(tDecoder* d) {
+    /* code */
+    return 0;
+}
+
+typedef struct encoder {
+    int _pin;
 } tEncoder;
 
 void encoder_init(tEncoder* e, int pin) {
@@ -78,7 +150,6 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
     int pipefd[2];
     pid_t cpid;
-    char buf;
  
     if (pipe(pipefd) == -1) {
         perror("pipe");
@@ -94,8 +165,18 @@ int main(int argc, char *argv[]) {
     if (cpid == 0) {    /* Child reads from pipe */
         close(pipefd[1]);          /* Close unused write end */
 
-        while (read(pipefd[0], &buf, 1) > 0)
-            write(STDOUT_FILENO, &buf, 1);
+
+        tDecoder decoder;
+        decoder_init(&decoder, pipefd[0]);
+
+        int i;
+        for (i = 0; i < 260; i++) {
+            if ( decoder_available(&decoder) ) {
+                printf("%c\n", decoder_read(&decoder) );
+            }
+        }
+        //while (read(pipefd[0], &buf, 1) > 0)
+            //write(STDOUT_FILENO, &buf, 1);
 
         write(STDOUT_FILENO, "\n", 1);
             close(pipefd[0]);
