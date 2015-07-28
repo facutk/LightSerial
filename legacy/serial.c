@@ -35,7 +35,6 @@ void digitalWrite(int pin, uint8_t state) {
         if (flipbit) {
             write(pin, &states[!state], 1);
         } else {
-            //printf("%c", states[state]);
             write(pin, &states[state], 1);
         }
     }
@@ -45,6 +44,7 @@ typedef struct decoder {
     int _pin;
     uint8_t _prev_reading;
     uint8_t _count;
+    uint8_t _transition_count;
     uint8_t _decoding;
     uint8_t _window[8];
     uint8_t _slot;
@@ -65,6 +65,7 @@ void decoder_init(tDecoder* d, int pin) {
     d->_bit_count = 0;
     d->_byte = 0x00;
     d->_decoded = 0;
+    d->_transition_count = 0;
 }
 
 void decoder_decode_bit(tDecoder* d, uint8_t bit) {
@@ -72,6 +73,8 @@ void decoder_decode_bit(tDecoder* d, uint8_t bit) {
     // LO D0 D1 D2 D3 D4 D5 D6 D7 PT HI
     //printf("%d\t%d\n", d->_bit_count, bit);
 
+    //switch( d->_bit_count ) {}
+    
     if (d->_bit_count == 0) {
         if (bit == 1) {
             // ERROR
@@ -116,11 +119,17 @@ void decoder_decode_bit(tDecoder* d, uint8_t bit) {
 
 int decoder_available(tDecoder*d) {
     int reading = digitalRead( d->_pin );
+
+    uint8_t transition = 0;
     if (reading == d->_prev_reading) {
         if (d->_count < 255) {
             d->_count +=1;
         }
     } else {
+        transition = 1;
+    }
+
+    if (transition) {
         if (d->_decoding) {
             int bit_count = d->_count / d->_avg;
             int i;
