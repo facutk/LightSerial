@@ -1,0 +1,482 @@
+<SCRIPT LANGUAGE="JAVASCRIPT">
+
+/*
+;
+; Some general information about Morse Code Speed;
+;
+; <1> A Dash is three times longer than a Dot
+; <2> A Dot space between Dashes and Dots within a character
+; <3> A pause between characters is three Dots long
+; <4> A pause between words is seven dots long
+;
+; The word 'Paris' was established as an international standard
+; for calculating the speed of Morse in words-per-minute (wpm) 
+; and characters-per-minute (cpm)...  This works out to 50 dots
+; (or dot times) per word and yields the following timing;
+;
+;  5-wpm ( 25-cpm) =  60 /  250 dots = 240-msec / dot
+;  6-wpm ( 30-cpm) =  60 /  300 dots = 200-msec / dot
+;  7-wpm ( 35-cpm) =  60 /  350 dots = 171-msec / dot
+;  8-wpm ( 40-cpm) =  60 /  400 dots = 150-msec / dot
+;  9-wpm ( 45-cpm) =  60 /  450 dots = 133-msec / dot
+; 10-wpm ( 50-cpm) =  60 /  500 dots = 120-msec / dot
+; 15-wpm ( 75-cpm) =  60 /  750 dots =  80-msec / dot
+; 20-wpm (100-cpm) =  60 / 1000 dots =  60-msec / dot
+; 25-wpm (125-cpm) =  60 / 1250 dots =  48-msec / dot
+; 30-wpm (150-cpm) =  60 / 1500 dots =  40-msec / dot
+; 35-wpm (175-cpm) =  60 / 1750 dots =  34-msec / dot
+; 40-wpm (200-cpm) =  60 / 2000 dots =  30-msec / dot
+; 50-wpm (250-cpm) =  60 / 2500 dots =  24-msec / dot
+;
+*/
+
+/*
+https://instruct1.cit.cornell.edu/Courses/ee476/FinalProjects/s2004/yl245/learn.gif
+
+<--- DASH ---                    START                    --- DOT --->          
+                   /                               \                  
+                  T                                 E                 
+          /              \                   /              \         
+         M                N                 A                I        
+      /     \          /     \           /     \          /     \     
+     O       G        K       D         W       R        U       S    
+    / \     / \      / \     / \       / \       \      / \     / \   
+   -   .   Q   Z    Y   C   X   B     J   P       L    -   F   V   H  
+  / \   \       \                \   /                /       /   / \ 
+ 0   9   8       7                6 1                2       3   4   5
+
+*/
+
+
+var letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:?'-/()\"";
+var morse_codes = new Array(
+".-","-...","-.-.","-..",".","..-.",
+"--.","....","..",".---","-.-",".-..",
+"--","-.","---",".--.","--.-",".-.",
+"...","-","..-","...-",".--","-..-",
+"-.--","--..","-----",".----","..---",
+"...--","....-",".....","-....","--...",
+"---..","----."," ",".-.-.-","--..--",
+"---...","..--..",".----.","-....-","-..-.",
+"-.--.-","-.--.-",".-..-.");
+
+
+var charCodes=new Array(36);
+charCodes["a"]="=.===";
+charCodes["b"]="===.=.=.=";
+charCodes["c"]="===.=.===.=";
+charCodes["d"]="===.=.=";
+charCodes["e"]="=";
+charCodes["f"]="=.=.===.=";
+charCodes["g"]="===.===.=";
+charCodes["h"]="=.=.=.=";
+charCodes["i"]="=.=";
+charCodes["j"]="=.===.===.===";
+charCodes["k"]="===.=.===";
+charCodes["l"]="=.===.=.=";
+charCodes["m"]="===.===";
+charCodes["n"]="===.=";
+charCodes["o"]="===.===.===";
+charCodes["p"]="=.===.===.=";
+charCodes["q"]="===.===.=.===";
+charCodes["r"]="=.===.=";
+charCodes["s"]="=.=.=";
+charCodes["t"]="===";
+charCodes["u"]="=.=.===";
+charCodes["v"]="=.=.=.===";
+charCodes["w"]="=.===.===";
+charCodes["x"]="===.=.=.===";
+charCodes["y"]="===.=.===.===";
+charCodes["z"]="===.===.=.=";
+charCodes["1"]="=.===.===.===.===";
+charCodes["2"]="=.=.===.===.===";
+charCodes["3"]="=.=.=.===.===";
+charCodes["4"]="=.=.=.=.===";
+charCodes["5"]="=.=.=.=.=";
+charCodes["6"]="===.=.=.=.=";
+charCodes["7"]="===.===.=.=.=";
+charCodes["8"]="===.===.===.=.=";
+charCodes["9"]="===.===.===.===.=";
+charCodes["0"]="===.===.===.===.===";
+
+
+
+var patternMap = {
+                "=.===": "A",
+                "===.=.=.=": "B",
+                "===.=.===.=": "C",
+                "===.=.=": "D",
+                "=": "E",
+                "=.=.===.=": "F",
+                "===.===.=": "G",
+                "=.=.=.=": "H",
+                "=.=": "I",
+                "=.===.===.===": "J",
+                "===.=.===": "K",
+                "=.===.=.=": "L",
+                "===.===": "M",
+                "===.=": "N",
+                "===.===.===": "O",
+                "=.===.===.=": "P",
+                "===.===.=.===": "Q",
+                "=.===.=": "R",
+                "=.=.=": "S",
+                "===": "T",
+                "=.=.===": "U",
+                "=.=.=.===": "V",
+                "=.===.===": "W",
+                "===.=.=.===": "X",
+                "===.=.===.===": "Y",
+                "===.===.=.=": "Z",
+                "=.===.===.===.===": "1",
+                "=.=.===.===.===": "2",
+                "=.=.=.===.===": "3",
+                "=.=.=.=.===": "4",
+                "=.=.=.=.=": "5",
+                "===.=.=.=.=": "6",
+                "===.===.=.=.=": "7",
+                "===.===.===.=.=": "8",
+                "===.===.===.===.=": "9",
+                "===.===.===.===.===": "0",
+            };
+
+var temp=''
+
+
+
+function text_to_morse( text ) {
+    var chars=text.split("");
+    var result = "";
+
+    for (a=0; a<chars.length; a++) {
+        if (chars[a]!=" ") {
+            if (window.charCodes[chars[a]]) {
+                result+=charCodes[chars[a]]+"...";
+            }
+        }
+    }
+    result+="....";
+    return result;
+}
+
+function encode() {
+    document.morsecode.morse_encoded.value = text_to_morse( 
+document.morsecode.chars.value.toLowerCase() );
+}
+
+function blink_morse() {
+    var ms = 1.7*1000/document.camera.fps.value;
+    morse_code = document.morsecode.morse_encoded.value;
+    i = 0;
+    var div = document.getElementById('change');
+    (function myLoop () {          
+        setTimeout(function () {   
+            if( i > morse_code.length ) i = 0;
+            if( morse_code[i]=='=')
+                div.style.backgroundColor = "#FFFFFF";
+            else
+                div.style.backgroundColor = "#000000";
+            i++;
+            myLoop();
+        }, ms)
+    })();
+}
+
+function sample() {
+    var ms = 1000/document.camera.fps.value;
+    var div = document.getElementById('change');
+    var new_sample = "";
+    var next_ms = 0;
+    var morseAnalysis = new MorseAnalyser();
+    (function SampleLoop () {
+        next_ms = Math.ceil( ms + ( ms * 0.15 * ( Math.random() ) ) );
+        
+        setTimeout(function () {   
+
+            if( div.style.backgroundColor == 'rgb(0, 0, 0)' )
+                new_sample = ".";
+            else
+                new_sample = "=";
+                
+            document.morse_sample.sampling.value += new_sample;
+            morseAnalysis.feedState( new_sample );
+            if( morseAnalysis.word )
+                document.morse_decode.decoded.value = 
+morseAnalysis.word;
+            
+            SampleLoop();
+        }, next_ms)
+    })();
+}
+
+
+function downsample() {
+
+    morse = document.morse_sample.sampling.value;
+    var dash_len = 3;
+    var buffer = "";
+    var prev_code = "";
+    
+    for ( i = 0; i < morse.length; i++ ) {
+        
+        if ( prev_code == morse[i] ) {
+            buffer += morse[i];
+        }
+        else {
+            // console.log( buffer + ": " + (buffer.length / dash_len) );
+            if( ( buffer.length / dash_len ) > 2 ) {
+                buffer = buffer.substring(0,7);
+            }
+            else {
+                if( ( buffer.length / dash_len ) > 1 ) {
+                    buffer = buffer.substring(0,3);
+                }
+                else {
+                    buffer = buffer.substring(0,1);
+                }
+            }
+            
+            //console.log( buffer );
+            document.morse_downsample.morse.value += buffer;
+            buffer = morse[i];
+        }
+        prev_code = morse[i];    
+    }
+    
+}
+
+
+var murse = {
+    '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E',
+    '..-.': 'F', '--.': 'G', '....': 'H', '..': 'I', '.---': 'J',
+    '-.-': 'K', '.-..': 'L', '--': 'M', '-.': 'N', '---': 'O',
+    '.--.': 'P', '--.-': 'Q', '.-.': 'R', '...': 'S', '-': 'T',
+    '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X', '-.--': 'Y',
+    '--..': 'Z', '.----': '1', '..---': '2', '...--': '3', 
+    '....-': '4', '.....': '5', '-....': '6', '--...': '7',
+    '---..': '8', '----.': '9', '-----': '0', '.-.-.-': '.',
+    '--..--': ',', '..--..': '?', '-..-.': '/', '.--.-.': '@'
+};
+
+function translate_morse(code) {
+    return (typeof murse[code] === "undefined") ? "" : murse[code];
+}
+
+
+function decode() {
+
+  var input = document.morse_note.morse_notation.value;
+  var output = "";
+
+  output = input.split(" ").map(translate_morse).join("")
+
+  document.morse_decode.decoded.value = output;
+
+}
+
+
+function morsenotation() {
+    var morse = morse_downsample.morse.value;
+    var out_code = "";
+    var buffer = "";
+    var prev_code = "";
+    
+    for ( i = 0; i < morse.length; i++ ) {
+        
+        if ( prev_code == morse[i] ) {
+            buffer += morse[i];
+        }
+        else {
+            if( buffer.length == 7 ) {
+                buffer = "";
+                out_code = "\n";
+            } else {
+                if( buffer.length == 1 ) {
+                    if ( buffer == "." ) {
+                        out_code = "";
+                    } else {
+                        out_code = ".";
+                    }
+                }
+                else {
+                    if( buffer.length == 3 ) {
+                        if ( buffer == "..." ) {
+                            out_code = " ";
+                        } else {
+                            out_code = "-";
+                        }
+                    }
+                }
+            }
+            console.log( out_code );
+            document.morse_note.morse_notation.value += out_code;
+            out_code = "";
+            buffer = morse[i];
+        }
+        prev_code = morse[i];    
+    }
+    
+    //document.morse_note.morse_notation.value = 
+morse_downsample.morse.value;
+}
+
+function MorseAnalyser() {
+    //Class definition
+
+    //Atributes
+    this.word = "";
+    this.partial_word = "";
+    this.dash_len = 3;
+    this.buffer = "";
+    this.char_buffer = "";
+    this.prev_state = "";
+
+    this.morse_table = {
+        '.-':     'A', '-...':   'B', '-.-.':  'C', '-..':    'D', '.':    
+'E',
+        '..-.':   'F', '--.':    'G', '....':  'H', '..':     'I', 
+'.---': 'J',
+        '-.-':    'K', '.-..':   'L', '--':    'M', '-.':     'N', 
+'---':  'O',
+        '.--.':   'P', '--.-':   'Q', '.-.':   'R', '...':    'S', '-':    
+'T',
+        '..-':    'U', '...-':   'V', '.--':   'W', '-..-':   'X', 
+'-.--': 'Y',
+        '--..':   'Z', '.----':  '1', '..---': '2', '...--':  '3', 
+        '....-':  '4', '.....':  '5', '-....': '6', '--...':  '7',
+        '---..':  '8', '----.':  '9', '-----': '0', '.-.-.-': '.',
+        '--..--': ',', '..--..': '?', '-..-.': '/', '.--.-.': '@'
+    };
+    
+    //Methods
+    this.feedState       = feedState;
+    this.translate_morse = translate_morse;
+    
+    //Method Definitions
+    function translate_morse(code) {
+        return (typeof this.morse_table[code] === "undefined") ? "" : 
+this.morse_table[code];
+    }
+
+    function feedState( state ) {
+        var partial_code = "";
+        var decoded_char = "";
+
+        if ( this.prev_state == state ) {
+            this.buffer += state;
+        }
+        else {
+            if( ( this.buffer.length / this.dash_len ) > 2 ) { // TERMINO LA PALABRA
+                this.buffer = this.buffer.substring(0,7);
+                // termino la letra
+                decoded_char = this.translate_morse( this.char_buffer );
+                this.partial_word += decoded_char;
+                this.word = this.partial_word;
+                //console.log( this.partial_word );
+                //console.log( this.word );
+                this.partial_word = "";
+                this.char_buffer = "";
+            }
+            else {
+                if( ( this.buffer.length / this.dash_len ) > 1 ) { // es un DASH
+                    this.buffer = this.buffer.substring(0,3);
+                    if ( this.buffer == "===" ) {
+                        partial_code = '-';
+                    }
+                    if ( this.buffer == "..." ) { // TERMINO LA LETRA
+                        decoded_char = this.translate_morse( this.char_buffer );
+                        this.partial_word += decoded_char;
+                        //console.log( this.partial_word );
+                        //console.log( this.word );
+                        this.char_buffer = "";
+                    }
+                }
+                else { // es un DOT
+                    this.buffer = this.buffer.substring(0,1);
+                    if( this.buffer == '=' ) {
+                        partial_code = '.';
+                    }
+                }
+            }
+            
+            this.char_buffer += partial_code;
+            this.buffer = state;
+        }
+        this.prev_state = state;
+    }
+
+}
+
+function domagic() {
+    var morseAnalysis = new MorseAnalyser();
+
+    morse = document.morse_sample.sampling.value;
+    for( i = 0; i < morse.length; i++ )
+        morseAnalysis.feedState( morse[i] );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</SCRIPT>
+
+<FORM NAME="camera">
+<input type="number" name="fps" min="1" max="30" value="10">
+</FORM>
+
+<FORM NAME="morsecode">
+<INPUT TYPE="TEXT" NAME="chars" size="28" value="BASE">
+<INPUT TYPE="BUTTON" VALUE="Encode" onClick="encode()">
+<BR>
+<INPUT TYPE="TEXT" NAME="morse_encoded" size="100" value="">
+<INPUT TYPE="BUTTON" VALUE="Blink" onClick="blink_morse()">
+<div id="change" style="height:20px; width:20px; 
+background-color:#000000"></div><BR>
+</FORM>
+
+
+<FORM NAME="morse_sample">
+<INPUT TYPE="BUTTON" VALUE="Sample" onClick="sample()"><BR>
+<textarea name="sampling" rows="6" cols="80">
+=====.==.==.==.....=..=====....==..=..=.....=.............
+</textarea><BR>
+</FORM>
+
+
+<FORM NAME="morse_decode">
+<INPUT TYPE="BUTTON" VALUE="Decode" onClick="decode()">
+<INPUT TYPE="TEXT" NAME="decoded" size="28" value="">
+</FORM>
+
+<FORM NAME="magic">
+<INPUT TYPE="BUTTON" VALUE="Magic" onClick="domagic()">
+</FORM>
+
+<FORM NAME="morse_downsample">
+<textarea name="morse" rows="6" 
+cols="80">===.=.=.=...=.===...=.=.=...=.......</textarea><BR>
+<INPUT TYPE="BUTTON" VALUE="DownSample" onClick="downsample()"><BR>
+</FORM>
+
+<FORM NAME="morse_note">
+<textarea name="morse_notation" rows="6" cols="80"></textarea><BR>
+<INPUT TYPE="BUTTON" VALUE="Morse Notation" 
+onClick="morsenotation()"><BR>
+</FORM>
+

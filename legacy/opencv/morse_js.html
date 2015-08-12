@@ -1,0 +1,328 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+    <title>Morse_js</title>
+
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    
+<style type="text/css">
+    
+
+/*
+ * Globals
+ */
+
+/* Links */
+a,
+a:focus,
+a:hover {
+  color: #fff;
+}
+
+/* Custom default button */
+.btn-default,
+.btn-default:hover,
+.btn-default:focus {
+  color: #333;
+  text-shadow: none; /* Prevent inheritence from `body` */
+  background-color: #fff;
+  border: 1px solid #fff;
+}
+
+
+/*
+ * Base structure
+ */
+
+html,
+body {
+  height: 100%;
+  background-color: #333;
+}
+body {
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  box-shadow: inset 0 0 100px rgba(0,0,0,.5);
+}
+ 
+.bg_black { background-color: #000000; }
+.bg_white { background-color: #ffffff; }
+
+/* Extra markup and styles for table-esque vertical and horizontal centering */
+.site-wrapper {
+  display: table;
+  width: 100%;
+  height: 100%; /* For at least Firefox */
+  min-height: 100%;
+}
+.site-wrapper-inner {
+  display: table-cell;
+  vertical-align: top;
+}
+.cover-container {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+/* Padding for spacing */
+.inner {
+  padding: 30px;
+}
+
+
+/*
+ * Header
+ */
+.masthead-brand {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.masthead-nav > li {
+  display: inline-block;
+}
+.masthead-nav > li + li {
+  margin-left: 20px;
+}
+.masthead-nav > li > a {
+  padding-right: 0;
+  padding-left: 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff; /* IE8 proofing */
+  color: rgba(255,255,255,.75);
+  border-bottom: 2px solid transparent;
+}
+.masthead-nav > li > a:hover,
+.masthead-nav > li > a:focus {
+  background-color: transparent;
+  border-bottom-color: rgba(255,255,255,.25);
+}
+.masthead-nav > .active > a,
+.masthead-nav > .active > a:hover,
+.masthead-nav > .active > a:focus {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+@media (min-width: 768px) {
+  .masthead-brand {
+    float: left;
+  }
+  .masthead-nav {
+    float: right;
+  }
+}
+
+
+/*
+ * Cover
+ */
+
+.cover {
+  padding: 0 20px;
+}
+.cover .btn-lg {
+  padding: 10px 20px;
+  font-weight: bold;
+}
+
+
+/*
+ * Footer
+ */
+
+.mastfoot {
+  color: #999; /* IE8 proofing */
+  color: rgba(255,255,255,.5);
+}
+
+
+/*
+ * Affix and center
+ */
+
+@media (min-width: 768px) {
+  /* Pull out the header and footer */
+  .masthead {
+    position: fixed;
+    top: 0;
+  }
+  .mastfoot {
+    position: fixed;
+    bottom: 0;
+  }
+  /* Start the vertical centering */
+  .site-wrapper-inner {
+    vertical-align: middle;
+  }
+  /* Handle the widths */
+  .masthead,
+  .mastfoot,
+  .cover-container {
+    width: 100%; /* Must be percentage or pixels for horizontal alignment */
+  }
+}
+
+@media (min-width: 992px) {
+  .masthead,
+  .mastfoot,
+  .cover-container {
+    width: 700px;
+  }
+}
+
+</style>
+<SCRIPT LANGUAGE="JAVASCRIPT">
+
+$( document ).ready(function() {
+
+    var charCodes=new Array(36);
+    charCodes["a"]="=.===";
+    charCodes["b"]="===.=.=.=";
+    charCodes["c"]="===.=.===.=";
+    charCodes["d"]="===.=.=";
+    charCodes["e"]="=";
+    charCodes["f"]="=.=.===.=";
+    charCodes["g"]="===.===.=";
+    charCodes["h"]="=.=.=.=";
+    charCodes["i"]="=.=";
+    charCodes["j"]="=.===.===.===";
+    charCodes["k"]="===.=.===";
+    charCodes["l"]="=.===.=.=";
+    charCodes["m"]="===.===";
+    charCodes["n"]="===.=";
+    charCodes["o"]="===.===.===";
+    charCodes["p"]="=.===.===.=";
+    charCodes["q"]="===.===.=.===";
+    charCodes["r"]="=.===.=";
+    charCodes["s"]="=.=.=";
+    charCodes["t"]="===";
+    charCodes["u"]="=.=.===";
+    charCodes["v"]="=.=.=.===";
+    charCodes["w"]="=.===.===";
+    charCodes["x"]="===.=.=.===";
+    charCodes["y"]="===.=.===.===";
+    charCodes["z"]="===.===.=.=";
+    charCodes["1"]="=.===.===.===.===";
+    charCodes["2"]="=.=.===.===.===";
+    charCodes["3"]="=.=.=.===.===";
+    charCodes["4"]="=.=.=.=.===";
+    charCodes["5"]="=.=.=.=.=";
+    charCodes["6"]="===.=.=.=.=";
+    charCodes["7"]="===.===.=.=.=";
+    charCodes["8"]="===.===.===.=.=";
+    charCodes["9"]="===.===.===.===.=";
+    charCodes["0"]="===.===.===.===.===";
+
+
+
+    function text_to_morse( text ) {
+        var chars=text.toLowerCase().split("");
+        var result = "";
+        for (a=0; a<chars.length; a++) {
+            if (chars[a]!=" ") {
+                if (charCodes[chars[a]]) {
+                    result+=charCodes[chars[a]]+"...";
+                }
+            }
+        }
+        result+="....";
+        return result;
+    }
+
+
+    $( "#blink" ).click(function() {
+        //alert( $( "#out_message" ).val() );
+        //$('#inner_cover').css('background', 'white !important');
+        var fps = 7;
+        var ms = 1.7*1000/fps;
+        var morse_code = text_to_morse( $( "#out_message" ).val() );
+        var i = 0;
+        //$('#inner_cover').css('background-color', 'white !important');
+
+        $("body").removeClass('bg_black, bg_white').addClass("bg_black");
+        (function myLoop () {          
+            setTimeout(function () {   
+
+                if( i > morse_code.length ) i = 0;
+                if( morse_code[i]=='=')
+                    $("body").removeClass('bg_black, bg_white').addClass("bg_white");
+                else
+                    $("body").removeClass('bg_black, bg_white').addClass("bg_black");
+
+                i++;
+                myLoop();
+            },
+            ms)
+        })();
+
+
+
+
+    });
+
+});
+
+</SCRIPT>
+</head>
+
+<body>
+
+    <div class="site-wrapper">
+
+      <div class="site-wrapper-inner">
+
+        <div class="cover-container">
+
+          <div class="masthead clearfix">
+            <div class="inner">
+              <h3 class="masthead-brand">Morse Blinker</h3>
+              <ul class="nav masthead-nav">
+                <li class="active"><a href="#">Home</a></li>
+                <li><a href="#">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="inner cover">
+            <p class="lead">
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="out_message">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button" id="blink">
+                                    <span class="glyphicon glyphicon-qrcode"></span> Blink!
+                                </button>
+                            </span>
+                        </div><!-- /input-group -->
+                    </div><!-- /.col-lg-6 -->
+                </div><!-- /.row -->
+
+            </p>
+          </div>
+
+          <div class="mastfoot">
+            <div class="inner">
+              <p>Morse Blinker by . facu .</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+</body>
+</html>
