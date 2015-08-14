@@ -18,6 +18,7 @@ def decode( signal, count ):
         else:
             decode.index += 2
     else:
+        #if decode.dot_len:
         if count > decode.dot_len:
             if decode.index <= len( decode.lookup ):
                 char = decode.lookup[ decode.index ]
@@ -30,9 +31,9 @@ def decode( signal, count ):
                 #decode.stop_len = 0
 decode.lookup = " ETIANMSURWDKGOHVF L@PJBXCYZQ-*54.3,:|2!?+#$&'16=/()<>[7]{}8_90"
 decode.index = 0
-decode.dot_len = 40#40
-decode.dash_len = 40#40
-decode.stop_len = 40#40
+decode.dot_len = 0#40
+decode.dash_len = 0#40
+decode.stop_len = 0#40
 
 def denoise( reading ):
     if reading == denoise.working:
@@ -45,9 +46,9 @@ def denoise( reading ):
         denoise.transition += 1
         if denoise.transition > denoise.threshold:
             decode( denoise.working, denoise.count )
+            denoise.working = reading
             denoise.count = denoise.transition
             denoise.transition = 0
-            denoise.working = reading
 denoise.working = '0'
 denoise.count = 0
 denoise.transition = 0
