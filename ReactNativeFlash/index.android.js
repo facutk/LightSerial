@@ -13,6 +13,7 @@ import {
   Button
 } from 'react-native';
 import RNFlash from 'react-native-flash';
+import morseMessageTiming from './morseMessageTiming';
 
 RNFlash.turnOnFlash(); // turn on flash
 		
@@ -64,6 +65,19 @@ export default class AwesomeProject extends Component {
     })
   }
 
+  handleMorse = () => {
+    morseMessageTiming('facutk', 100, (action) => {
+      switch (action) {
+        case "ON":
+          RNFlash.turnOnFlash();
+          break;
+        case "OFF":
+          RNFlash.turnOffFlash();
+          break;
+      }
+    });
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -82,6 +96,11 @@ export default class AwesomeProject extends Component {
           onPress={this.handleProfile}
           title={this.state.profile}
           color="#841584"
+        />
+        <Button
+          onPress={this.handleMorse}
+          title="morse: facutk"
+          color="#99cc00"
         />
         <Text style={styles.instructions}>
           Double tap R on your keyboard to reload,{'\n'}
