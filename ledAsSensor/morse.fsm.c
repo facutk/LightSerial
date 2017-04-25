@@ -1,32 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 #include <stdbool.h>
 
 #define DOT_LEN 4
 
 char lookup[] = " ETIANMSURWDKGOHVF L@PJBXCYZQ-*54.3,:|2!?+#$&'16=/()<>[7]{}8_90";
-
-char decode( char * code ) {
-  int index = 0;
-  int code_len = strlen( code );
-  int i;
-  int increment = 0;
-
-  for (i = 0; i < code_len; i++) {
-    index *= 2;
-    increment = ( code[i] == '.')? 1 : 2;
-    index += increment;
-  }
-
-  return lookup[ index ];
-}
-
-void tests() {
-  char MorseL[]=".-..";
-  assert( decode( MorseL ) == 'L' );
-}
 
 typedef enum {
   state_none,
