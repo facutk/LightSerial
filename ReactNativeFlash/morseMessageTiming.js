@@ -46,7 +46,7 @@ const encodeString = (input) => {
 
 const encode = (input) => {
   const message = encodeString(input);
-  const init  = '01111111';
+  const init  = '0000000';
   const space = '000';
   const intra = '0';
   const dot   = '1';
