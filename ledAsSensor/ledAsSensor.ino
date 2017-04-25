@@ -91,7 +91,7 @@ void loop()
   //if (isDark)
   //{
     lightMode();
-    delay(100);
+    delay(25);
     sensorMode();
   //}
  
