@@ -9,6 +9,7 @@ import {
   AppRegistry,
   StyleSheet,
   Text,
+  TextInput,
   View,
   Button
 } from 'react-native';
@@ -30,7 +31,8 @@ export default class AwesomeProject extends Component {
     super(props, context);
     this.state = {
       flash: false,
-      profile: 'Profile'
+      profile: 'Profile',
+      message: 'facutk'
     };
   }
 
@@ -66,7 +68,7 @@ export default class AwesomeProject extends Component {
   }
 
   handleMorse = () => {
-    morseMessageTiming('facutk', 100, (action) => {
+    morseMessageTiming(this.state.message, 100, (action) => {
       switch (action) {
         case "ON":
           RNFlash.turnOnFlash();
@@ -97,9 +99,16 @@ export default class AwesomeProject extends Component {
           title={this.state.profile}
           color="#841584"
         />
+
+        <TextInput
+          autoCapitalize="none"
+          autoCorrect={false}
+          onChange={(event) => this.setState({ message: event.nativeEvent.text })}
+          value={this.state.message}
+        />
         <Button
           onPress={this.handleMorse}
-          title="morse: facutk"
+          title={'morse: ' + this.state.message}
           color="#99cc00"
         />
         <Text style={styles.instructions}>
